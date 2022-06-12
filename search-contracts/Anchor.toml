@@ -1,0 +1,14 @@
+[features]
+seeds = false
+[programs.localnet]
+search_contracts = "2rYAfiituf3R1DmAXuUw2AAN1HkudAAzcnna2CCNpQ8e"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "localnet"
+wallet = "./tests/test-key.json"
+
+[scripts]
+test = "yarn mocha tests/*.ts"
