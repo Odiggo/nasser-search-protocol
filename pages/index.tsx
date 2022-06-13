@@ -64,6 +64,7 @@ export type SearchResult = {
   title: string | null | undefined;
   summary: string | null | undefined;
   link: string | null | undefined;
+  thumbnail: string | undefined;
 }
 
 function Home() {
@@ -80,26 +81,33 @@ function Home() {
 
   const search = async () => {
     if (!searchText) { return }
-    const bookResults = await fetch(`https://api.odiggo.xyz/api/v1/search/?q=:${searchText}`);
-    console.log(await bookResults.json());
+    const response = await fetch(`https://api.odiggo.xyz/api/v1/search/?q=:${searchText}`);
+    const bookResults = await response.json();
+    console.log(bookResults);
 
-    const results = await fetch(`https://export.arxiv.org/api/query?search_query=all:${searchText}`);
-    const resultsText = await results.text();
-    const parsedResults = await new window.DOMParser().parseFromString(resultsText, "text/xml");
     let searchResults = new Array<SearchResult>();
-    const entries = Array.from(parsedResults.getElementsByTagName('entry'));
-    for (const entry of entries) {
-      const title = entry.getElementsByTagName('title')[0]?.textContent
-      const summary = entry.getElementsByTagName('summary')[0]?.textContent
-      const links = Array.from(entry.getElementsByTagName('link') || []);
-      const link = links.filter(x => x.getAttribute('type') == 'application/pdf')[0]?.getAttribute('href');
+    for (const entry of bookResults.results) {
       searchResults.push({
-        title,
-        summary,
-        link
+        title: entry.title,
+        summary: "",
+        link: "",
+        thumbnail: entry.thumbnail
       })
     }
-    console.log(searchResults);
+
+    // const results = await fetch(`https://export.arxiv.org/api/query?search_query=all:${searchText}`);
+    // const resultsText = await results.text();
+    // const parsedResults = await new window.DOMParser().parseFromString(resultsText, "text/xml");
+    // const entries = Array.from(parsedResults.getElementsByTagName('entry'));
+    // for (const entry of entries) {
+    //   const title = entry.getElementsByTagName('title')[0]?.textContent
+    //   const summary = entry.getElementsByTagName('summary')[0]?.textContent
+    //   const links = Array.from(entry.getElementsByTagName('link') || []);
+    //   const link = links.filter(x => x.getAttribute('type') == 'application/pdf')[0]?.getAttribute('href');
+      
+    // }
+    // console.log(searchResults);
+
     setSearchResults(searchResults);
   }
 
@@ -115,17 +123,18 @@ function Home() {
     const charge = cost * duration * web3.LAMPORTS_PER_SOL;
     console.log(charge, wallet.publicKey)
 
-    var airdropSignature = await connection.requestAirdrop(
-      wallet.publicKey!,
-      web3.LAMPORTS_PER_SOL,
-    );
-
-    // Confirming that the airdrop went through
-    await connection.confirmTransaction(airdropSignature);
-    console.log("Airdropped");
-
     const bal = await connection.getBalance(wallet.publicKey!)
-    console.log(bal);
+    if (bal < charge) {
+      var airdropSignature = await connection.requestAirdrop(
+        wallet.publicKey!,
+        web3.LAMPORTS_PER_SOL,
+      );
+
+      // Confirming that the airdrop went through
+      await connection.confirmTransaction(airdropSignature);
+      console.log("Airdropped");
+
+    }
 
     const transaction = new web3.Transaction().add(
       web3.SystemProgram.transfer({
@@ -185,16 +194,18 @@ function Home() {
         {selectedResult == undefined
           ? searchResults.map(result => (
             <div style={{ color: 'black' }} onClick={() => {onStart(result)}}>
+              <img src={result.thumbnail} />
               <div>Title: {result.title}</div>
-              <div>Summary: {result.summary}</div>
-              <div>Link: {result.link}</div>
+              {/* <div>Summary: {result.summary}</div>
+              <div>Link: {result.link}</div> */}
               <hr/>
             </div>
           ))
          : (<div style={{ color: 'black' }}>
+              <img src={selectedResult.thumbnail}/>
               <div>Title: {selectedResult.title}</div>
-              <div>Summary: {selectedResult.summary}</div>
-              <div>Link: {selectedResult.link}</div>
+              {/* <div>Summary: {selectedResult.summary}</div>
+              <div>Link: {selectedResult.link}</div> */}
               <Button onClick={() => onEnd(selectedResult)}>Exit</Button>
            </div>)
         }
