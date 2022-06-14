@@ -160,6 +160,10 @@ export type SearchContracts = {
             "type": "publicKey"
           },
           {
+            "name": "escrowBump",
+            "type": "u8"
+          },
+          {
             "name": "activeSessions",
             "type": "u64"
           }
@@ -406,6 +410,10 @@ export const IDL: SearchContracts = {
           {
             "name": "escrow",
             "type": "publicKey"
+          },
+          {
+            "name": "escrowBump",
+            "type": "u8"
           },
           {
             "name": "activeSessions",

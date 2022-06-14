@@ -13,6 +13,7 @@ import { FaQuestion } from 'react-icons/fa'
 import { xml2js } from 'xml-js'
 import {Wallet} from '@metaplex/js'
 import { changeConfirmLocale } from 'antd/lib/modal/locale'
+import { startReading, stopReading } from 'search-contracts/src/apis'
 
 export function Placeholder() {
   return (
@@ -61,6 +62,7 @@ export const executeTransaction = async (
 const cost = 0.0001;
 
 export type SearchResult = {
+  id: string | null | undefined;
   title: string | null | undefined;
   summary: string | null | undefined;
   link: string | null | undefined;
@@ -88,6 +90,7 @@ function Home() {
     let searchResults = new Array<SearchResult>();
     for (const entry of bookResults.results) {
       searchResults.push({
+        id: entry.id,
         title: entry.title,
         summary: "",
         link: "",
@@ -111,39 +114,71 @@ function Home() {
     setSearchResults(searchResults);
   }
 
-  const onStart = (result: SearchResult) => {
+  const onStart = async (result: SearchResult) => {
     if (!wallet.connected) { return }
+
+    const bal = await connection.getBalance(wallet.publicKey!)
+    if (bal <= 1 * web3.LAMPORTS_PER_SOL) {
+      var airdropSignature = await connection.requestAirdrop(
+        wallet.publicKey!,
+        2 * web3.LAMPORTS_PER_SOL,
+      );
+
+      // Confirming that the airdrop went through
+      await connection.confirmTransaction(airdropSignature);
+      console.log("Airdropped");
+    }
+
+    const [transaction] = await startReading(connection, wallet as Wallet, {
+      uuid: (result.id!).substring(0, 5)
+    });
+
+    try {
+      await executeTransaction(connection, wallet as Wallet, transaction, {})
+      notify({
+          message: `Successfully paid 1 SOL to escrow`,
+          type: 'success',
+      })
+    } catch (e) {
+      notify({message: `Transaction failed: ${e}`, type: 'error'})
+    }
+
     setSelectedResult(result);
     setStartTs(new Date());
   };
 
   const onEnd = async (result: SearchResult) => {
     if (!wallet.connected) { return }
-    const duration = (Date.now() - startTs!.getTime())/1000;
-    const charge = cost * duration * web3.LAMPORTS_PER_SOL;
-    console.log(charge, wallet.publicKey)
 
-    const bal = await connection.getBalance(wallet.publicKey!)
-    if (bal < charge) {
-      var airdropSignature = await connection.requestAirdrop(
-        wallet.publicKey!,
-        web3.LAMPORTS_PER_SOL,
-      );
+    const [transaction] = await stopReading(connection, wallet as Wallet, {
+      uuid:  (result.id!).substring(0, 5)
+    })
 
-      // Confirming that the airdrop went through
-      await connection.confirmTransaction(airdropSignature);
-      console.log("Airdropped");
+    // const duration = (Date.now() - startTs!.getTime())/1000;
+    // const charge = cost * duration * web3.LAMPORTS_PER_SOL;
+    // console.log(charge, wallet.publicKey)
 
-    }
+    // const bal = await connection.getBalance(wallet.publicKey!)
+    // if (bal < charge) {
+    //   var airdropSignature = await connection.requestAirdrop(
+    //     wallet.publicKey!,
+    //     web3.LAMPORTS_PER_SOL,
+    //   );
 
-    const transaction = new web3.Transaction().add(
-      web3.SystemProgram.transfer({
-        fromPubkey: wallet.publicKey!,
-        toPubkey: new web3.PublicKey('9gUse5p6zanbFjudeSpNHv8eKDBQ3cwDy7wrzf7GVSHi'),
-        lamports: charge
-      }),
-    );
-    console.log(transaction)
+    //   // Confirming that the airdrop went through
+    //   await connection.confirmTransaction(airdropSignature);
+    //   console.log("Airdropped");
+
+    // }
+
+    // const transaction = new web3.Transaction().add(
+    //   web3.SystemProgram.transfer({
+    //     fromPubkey: wallet.publicKey!,
+    //     toPubkey: new web3.PublicKey('9gUse5p6zanbFjudeSpNHv8eKDBQ3cwDy7wrzf7GVSHi'),
+    //     lamports: charge
+    //   }),
+    // );
+    // console.log(transaction)
 
     // transaction.feePayer = wallet.publicKey!
     // let blockhashObj = await connection.getLatestBlockhash();
@@ -160,6 +195,9 @@ function Home() {
         message: `Successfully paid`,
         type: 'success',
       })
+
+      setSelectedResult(undefined);
+      setStartTs(new Date());
     } catch (e) {
       notify({message: `Transaction failed: ${e}`, type: 'error'})
     }
@@ -170,9 +208,6 @@ function Home() {
     // let signature = await connection.sendRawTransaction(signed.serialize());
     // // Confirm whether the transaction went through or not
     // await connection.confirmTransaction(signature);
-
-    setSelectedResult(undefined);
-    setStartTs(new Date());
   };
 
   return (

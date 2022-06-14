@@ -26,7 +26,7 @@ export const withInitResource = async (
       resourceId: resourceId,
       escrowId:escrowId,
       authority: wallet.publicKey,
-      chargeAmount: params.chargeAmount || new BN(1),
+      chargeAmount: params.chargeAmount || new BN(1000000),
       chargeDivisor: params.chargeDivisor || new BN(1)
     })
   );
