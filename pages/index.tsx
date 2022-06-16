@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button, TextField } from '@mui/material'
 import { useWallet } from '@solana/wallet-adapter-react'
 import * as web3 from '@solana/web3.js'
@@ -14,6 +15,7 @@ import { xml2js } from 'xml-js'
 import {Wallet} from '@metaplex/js'
 import { changeConfirmLocale } from 'antd/lib/modal/locale'
 import { startReading, stopReading } from 'search-contracts/src/apis'
+import { WalletContext } from 'wallet'
 
 export function Placeholder() {
   return (
@@ -71,7 +73,10 @@ export type SearchResult = {
 
 function Home() {
   const { connection, environment } = useEnvironmentCtx()
-  const wallet = useWallet();
+  
+  // const wallet = useWallet();
+  const wallet = React.useContext(WalletContext);
+
   const router = useRouter()
 
   const [searchText, setSearchText] = useState('')
@@ -115,19 +120,19 @@ function Home() {
   }
 
   const onStart = async (result: SearchResult) => {
-    if (!wallet.connected) { return }
+    if (!wallet.publicKey) { return }
 
-    const bal = await connection.getBalance(wallet.publicKey!)
-    if (bal <= 1 * web3.LAMPORTS_PER_SOL) {
-      var airdropSignature = await connection.requestAirdrop(
-        wallet.publicKey!,
-        2 * web3.LAMPORTS_PER_SOL,
-      );
+    // const bal = await connection.getBalance(wallet.publicKey)
+    // if (bal <= 1 * web3.LAMPORTS_PER_SOL) {
+    //   var airdropSignature = await connection.requestAirdrop(
+    //     wallet.publicKey,
+    //     2 * web3.LAMPORTS_PER_SOL,
+    //   );
 
-      // Confirming that the airdrop went through
-      await connection.confirmTransaction(airdropSignature);
-      console.log("Airdropped");
-    }
+    //   // Confirming that the airdrop went through
+    //   await connection.confirmTransaction(airdropSignature);
+    //   console.log("Airdropped");
+    // }
 
     const [transaction] = await startReading(connection, wallet as Wallet, {
       uuid: (result.id!).substring(0, 5)
@@ -139,16 +144,16 @@ function Home() {
           message: `Successfully paid 1 SOL to escrow`,
           type: 'success',
       })
+
+      setSelectedResult(result);
+      setStartTs(new Date());
     } catch (e) {
       notify({message: `Transaction failed: ${e}`, type: 'error'})
     }
-
-    setSelectedResult(result);
-    setStartTs(new Date());
   };
 
   const onEnd = async (result: SearchResult) => {
-    if (!wallet.connected) { return }
+    if (!wallet.publicKey) { return }
 
     const [transaction] = await stopReading(connection, wallet as Wallet, {
       uuid:  (result.id!).substring(0, 5)

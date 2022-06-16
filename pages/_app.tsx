@@ -1,14 +1,15 @@
 import '../styles/globals.css'
 import 'antd/dist/antd.dark.css'
 import type { AppProps } from 'next/app'
-import { WalletProvider } from '@solana/wallet-adapter-react'
-import { getWalletAdapters } from '@solana/wallet-adapter-wallets'
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
+// import { WalletProvider } from '@solana/wallet-adapter-react'
+// import { getWalletAdapters } from '@solana/wallet-adapter-wallets'
+// import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
 import {
   EnvironmentProvider,
   getInitialProps,
 } from 'providers/EnvironmentProvider'
 import { UTCNowProvider } from 'providers/UTCNowProvider'
+import { WalletProvider } from 'wallet'
 
 require('@solana/wallet-adapter-react-ui/styles.css')
 
@@ -19,10 +20,11 @@ const App = ({
 }: AppProps & { cluster: string }) => (
   <UTCNowProvider>
     <EnvironmentProvider defaultCluster={cluster}>
-      <WalletProvider wallets={getWalletAdapters()} autoConnect>
-          <WalletModalProvider>
+      <WalletProvider>
+      {/* <WalletProvider wallets={getWalletAdapters()} autoConnect> */}
+          {/* <WalletModalProvider> */}
             <Component {...pageProps} />
-          </WalletModalProvider>
+          {/* </WalletModalProvider> */}
       </WalletProvider>
     </EnvironmentProvider>
   </UTCNowProvider>

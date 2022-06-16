@@ -24,7 +24,8 @@ pub struct StartSessionCtx<'info> {
 pub fn handler(ctx: Context<StartSessionCtx>) -> Result<()> {
     let session = &mut ctx.accounts.session;
     if session.is_active {
-        return Err(error!(ErrorCode::SessionAlreadyActive));
+        // return Err(error!(ErrorCode::SessionAlreadyActive));
+        return Ok(());
     }
 
     let resource = &mut ctx.accounts.resource;

@@ -27,6 +27,7 @@
     "@solana/wallet-adapter-react-ui": "^0.9.6",
     "@solana/wallet-adapter-wallets": "^0.15.5",
     "@solana/web3.js": "^1.37.1",
+    "@web3auth/web3auth": "^1.0.1",
     "antd": "^4.19.5",
     "base58": "^2.0.1",
     "formik": "^2.2.9",

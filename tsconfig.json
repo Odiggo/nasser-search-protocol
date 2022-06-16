@@ -22,5 +22,5 @@
     "noErrorTruncation": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "search-contracts/migrations/*.ts", "search-contracts/tests/*.ts"]
 }
