@@ -93,28 +93,33 @@ function Home() {
     console.log(bookResults);
 
     let searchResults = new Array<SearchResult>();
-    for (const entry of bookResults.results) {
+    // for (const entry of bookResults.results) {
+    //   searchResults.push({
+    //     id: entry.id,
+    //     title: entry.title,
+    //     summary: "",
+    //     link: "",
+    //     thumbnail: entry.thumbnail
+    //   })
+    // }
+
+    const results = await fetch(`https://export.arxiv.org/api/query?search_query=all:${searchText}`);
+    const resultsText = await results.text();
+    const parsedResults = await new window.DOMParser().parseFromString(resultsText, "text/xml");
+    const entries = Array.from(parsedResults.getElementsByTagName('entry'));
+    for (const entry of entries) {
+      const title = entry.getElementsByTagName('title')[0]?.textContent
+      const summary = entry.getElementsByTagName('summary')[0]?.textContent
+      const links = Array.from(entry.getElementsByTagName('link') || []);
+      const link = links.filter(x => x.getAttribute('type') == 'application/pdf')[0]?.getAttribute('href');
       searchResults.push({
-        id: entry.id,
-        title: entry.title,
-        summary: "",
-        link: "",
-        thumbnail: entry.thumbnail
+        id: title,
+        title: title,
+        summary: summary,
+        link: link,
+        thumbnail: undefined
       })
     }
-
-    // const results = await fetch(`https://export.arxiv.org/api/query?search_query=all:${searchText}`);
-    // const resultsText = await results.text();
-    // const parsedResults = await new window.DOMParser().parseFromString(resultsText, "text/xml");
-    // const entries = Array.from(parsedResults.getElementsByTagName('entry'));
-    // for (const entry of entries) {
-    //   const title = entry.getElementsByTagName('title')[0]?.textContent
-    //   const summary = entry.getElementsByTagName('summary')[0]?.textContent
-    //   const links = Array.from(entry.getElementsByTagName('link') || []);
-    //   const link = links.filter(x => x.getAttribute('type') == 'application/pdf')[0]?.getAttribute('href');
-      
-    // }
-    // console.log(searchResults);
 
     setSearchResults(searchResults);
   }
@@ -236,16 +241,16 @@ function Home() {
             <div style={{ color: 'black' }} onClick={() => {onStart(result)}}>
               <img src={result.thumbnail} />
               <div>Title: {result.title}</div>
-              {/* <div>Summary: {result.summary}</div>
-              <div>Link: {result.link}</div> */}
+              <div>Summary: {result.summary}</div>
+              <div>Link: {result.link}</div>
               <hr/>
             </div>
           ))
          : (<div style={{ color: 'black' }}>
               <img src={selectedResult.thumbnail}/>
               <div>Title: {selectedResult.title}</div>
-              {/* <div>Summary: {selectedResult.summary}</div>
-              <div>Link: {selectedResult.link}</div> */}
+              <div>Summary: {selectedResult.summary}</div>
+              <div>Link: {selectedResult.link}</div>
               <Button onClick={() => onEnd(selectedResult)}>Exit</Button>
            </div>)
         }
